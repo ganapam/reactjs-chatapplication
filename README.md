@@ -7,6 +7,6 @@
 4) -> others personal details like phone number , email not visible to others it is like anonymus chat
 5) -> IN FIND USER MY NAME IS "  mahi  "  enter  comes and chat with me 
 only working in chat it working like present sending messages and images and recveing messages and images thats it 
-remaing part in development part
+remaing part in development ........................
 
 
