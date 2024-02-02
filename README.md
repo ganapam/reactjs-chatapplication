@@ -8,5 +8,9 @@
 5) -> IN FIND USER MY NAME IS "  mahi  "  enter  comes and chat with me 
 only working in chat it working like present sending messages and images and recveing messages and images thats it 
 remaing part in development ........................
+# UPDATE 2
+1) i founded issue in andriod mobile for seraching i solved with i buted a butooon there.
+2) puted option if clcik the change profile if go inside chnage ur profile picture when u want
+3) in login page given forgot passowrd if u dont no give ur register mail there u get mail and reset it that remaning part in  development......
 
 
