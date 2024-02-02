@@ -1,8 +1,8 @@
-import React,{ useContext, useState } from 'react'
-import Img from '../assests/img.png'
-import Attach from '../assests/attach.png'
-import { AuthContext } from '../Context/AuthContext'
-import { ChatContext } from '../Context/ChatContext'
+import React, { useContext, useState } from "react";
+import Img from "../assests/img.png";
+import Attach from "../assests/attach.png";
+import { AuthContext } from "../Context/AuthContext";
+import { ChatContext } from "../Context/ChatContext";
 import {
   arrayUnion,
   doc,
@@ -13,6 +13,7 @@ import {
 import { db, storage } from "../firebase";
 import { v4 as uuid } from "uuid";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+
 const Input = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);

@@ -18,13 +18,53 @@ const Messages = () => {
     };
   }, [data.chatId]);
 
-  console.log(messages)
+  console.log(messages);
+
+  // Function to format the timestamp to show 'today', 'yesterday', or the date
+  const formatDate = (timestamp) => {
+    const now = new Date();
+    const messageDate = new Date(timestamp);
+
+    if (
+      messageDate.getDate() === now.getDate() &&
+      messageDate.getMonth() === now.getMonth() &&
+      messageDate.getFullYear() === now.getFullYear()
+    ) {
+      return 'TODAY';
+    } else if (
+      messageDate.getDate() === now.getDate() - 1 &&
+      messageDate.getMonth() === now.getMonth() &&
+      messageDate.getFullYear() === now.getFullYear()
+    ) {
+      return 'YESTERDAY';
+    } else {
+      return messageDate.toDateString();
+    }
+  };
+
+  // Separate array to store unique dates
+  const uniqueDates = [];
 
   return (
     <div className="messages">
-      {messages.map((m) => (
-        <Message message={m} key={m.id} />
-      ))}
+      {messages.map((message, index) => {
+        const formattedDate = formatDate(message.date.seconds * 1000);
+
+        // Check if the date has been encountered before
+        if (!uniqueDates.includes(formattedDate)) {
+          // Add the date to the unique dates array
+          uniqueDates.push(formattedDate);
+
+          return (
+            <React.Fragment key={message.id}>
+              <div className="message-date text-center">{formattedDate}</div>
+              <Message message={message} />
+            </React.Fragment>
+          );
+        } else {
+          return <Message key={message.id} message={message} />;
+        }
+      })}
     </div>
   );
 };

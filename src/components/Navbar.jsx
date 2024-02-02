@@ -1,8 +1,15 @@
 import React, { useContext } from 'react';
-import { signOut } from 'firebase/auth';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';  // Add this import
-import { updateProfile } from 'firebase/auth';  // Add this import
-import { auth, storage } from '../firebase';
+import { signOut, updateProfile } from 'firebase/auth';
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from 'firebase/storage';
+import {
+  doc,
+  updateDoc,  // Add this import
+} from 'firebase/firestore';  // Add this import
+import { auth, storage, db } from '../firebase';  // Add db import
 import { AuthContext } from '../Context/AuthContext';
 
 const Navbar = () => {
@@ -20,18 +27,23 @@ const Navbar = () => {
         uploadTask.on(
           'state_changed',
           null,
+          async () => {
+            // Image uploaded successfully, get the download URL
+            const downloadURL = await getDownloadURL(storageRef);
+
+            // Update the user's profile with the new photo URL
+            await updateProfile(currentUser, { photoURL: downloadURL });
+
+            // Update the photo URL in Firestore user document
+            await updateDoc(doc(db, 'users', currentUser.uid), {
+              photoURL: downloadURL,
+            });
+
+            // Force a re-render to reflect the updated photo
+            window.location.reload();
+          },
           (error) => {
             console.error('Error uploading photo:', error);
-          },
-          () => {
-            // Image uploaded successfully, get the download URL
-            getDownloadURL(storageRef).then(async (downloadURL) => {
-              // Update the user's profile with the new photo URL
-              await updateProfile(auth.currentUser, { photoURL: downloadURL });
-
-              // Force a re-render to reflect the updated photo
-              window.location.reload();
-            });
           }
         );
       } catch (error) {
