@@ -1,15 +1,57 @@
-import React,{useState} from "react";
+import React, { useState } from "react";
 import Add from "../assests/addAvatar.png";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth, storage,db } from "../firebase";
-import {ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  auth,
+  storage,
+  db
+} from "../firebase";
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL
+} from "firebase/storage";
+import {
+  doc,
+  setDoc,
+  query,
+  where,
+  collection,
+  getDocs
+} from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
   const [err, setErr] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [displayNameError, setDisplayNameError] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({
+    displayName: false,
+    email: false,
+    password: false,
+    file: false,
+  });
   const navigate = useNavigate();
+
+  const generateUniqueDisplayName = async (baseName) => {
+    let uniqueName = baseName;
+    let counter = 1;
+
+    while (true) {
+      const displayNameQuery = query(
+        collection(db, "users"),
+        where("displayNameLower", "==", uniqueName.toLowerCase())
+      );
+      const displayNameSnapshot = await getDocs(displayNameQuery);
+
+      if (displayNameSnapshot.empty) {
+        return uniqueName;
+      }
+
+      uniqueName = `${baseName}${counter}`;
+      counter++;
+    }
+  };
 
   const handleSubmit = async (e) => {
     setLoading(true);
@@ -18,33 +60,59 @@ const Register = () => {
     const email = e.target[1].value;
     const password = e.target[2].value;
     const file = e.target[3].files[0];
+    const errors = {
+      displayName: !displayName,
+      email: !email,
+      password: !password,
+      file: !file,
+    };
+
+    setFieldErrors(errors);
+
+    // If any required field is missing, stop the submission
+    if (Object.values(errors).some((error) => error)) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      //Create user
+      // Generate a unique display name
+      const uniqueDisplayName = await generateUniqueDisplayName(displayName);
+
+      if (uniqueDisplayName !== displayName) {
+        setDisplayNameError(true);
+        setLoading(false);
+        return;
+      }
+
+      // Create user
       const res = await createUserWithEmailAndPassword(auth, email, password);
 
-      //Create a unique image name
+      // Create a unique image name
       const date = new Date().getTime();
-      const storageRef = ref(storage, `${displayName + date}`);
+      const storageRef = ref(storage, `${uniqueDisplayName + date}`);
 
       await uploadBytesResumable(storageRef, file).then(() => {
         getDownloadURL(storageRef).then(async (downloadURL) => {
           try {
-            //Update profile
+            // Update profile
             await updateProfile(res.user, {
-              displayName,
-              photoURL: downloadURL,
-            });
-            //create user on firestore
-            await setDoc(doc(db, "users", res.user.uid), {
-              uid: res.user.uid,
-              displayName,
-              email,
+              displayName: uniqueDisplayName,
               photoURL: downloadURL,
             });
 
-            //create empty user chats on firestore
+            // Create user on firestore
+            await setDoc(doc(db, "users", res.user.uid), {
+              uid: res.user.uid,
+              displayName: uniqueDisplayName,
+              email,
+              photoURL: downloadURL,
+              displayNameLower: uniqueDisplayName.toLowerCase(),
+            });
+
+            // Create empty user chats on firestore
             await setDoc(doc(db, "userChats", res.user.uid), {});
+
             navigate("/");
           } catch (err) {
             console.log(err);
@@ -66,15 +134,20 @@ const Register = () => {
         <span className="title">Register</span>
         <form onSubmit={handleSubmit}>
           <input required type="text" placeholder="display name" />
+          {fieldErrors.displayName && <span>Please enter a display name</span>}
+          {displayNameError && <span>Name Already Exists</span>}
           <input required type="email" placeholder="email" />
+          {fieldErrors.email && <span>Please enter an email</span>}
           <input required type="password" placeholder="password" />
+          {fieldErrors.password && <span>Please enter a password</span>}
           <input required style={{ display: "none" }} type="file" id="file" />
           <label htmlFor="file">
             <img src={Add} alt="" />
-            <span>Add an Image</span>
+            <span> Please Add Profile Image</span>
           </label>
+          {fieldErrors.file && <span>Please add a profile image</span>}
           <button disabled={loading}>Sign up</button>
-          {loading && "Uploading and compressing the image please wait..."}
+          {loading && "Uploading and compressing the image, please wait..."}
           {err && <span>Something went wrong</span>}
         </form>
         <p>
